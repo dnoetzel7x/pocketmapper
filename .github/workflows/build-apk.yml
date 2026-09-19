@@ -42,7 +42,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk PocketMapper-test.apk
-          gh release create pocketmapper-test-v0.1 PocketMapper-test.apk \
-            --target "$GITHUB_SHA" \
-            --title "PocketMapper Test v0.1" \
-            --notes "Minimal external-display test build."
+          if gh release view pocketmapper-test-v0.1 > /dev/null 2>&1; then
+            gh release upload pocketmapper-test-v0.1 PocketMapper-test.apk --clobber
+          else
+            gh release create pocketmapper-test-v0.1 PocketMapper-test.apk \
+              --target "$GITHUB_SHA" \
+              --title "PocketMapper Test v0.1" \
+              --notes "Minimal external-display test build."
+          fi

@@ -2,4 +2,7 @@
 /.idea/
 /local.properties
 **/build/
+**/bin/
+**/obj/
+windows/publish/
 *.iml

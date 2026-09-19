@@ -1,0 +1,54 @@
+name: Build Windows App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build portable Windows EXE
+        shell: pwsh
+        run: |
+          dotnet publish windows/PocketMapper.Windows/PocketMapper.Windows.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output windows/publish `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            -p:DebugType=None `
+            -p:DebugSymbols=false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketMapper-Windows
+          path: windows/publish/PocketMapper.exe
+          if-no-files-found: error
+
+      - name: Publish direct Windows download
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "pocketmapper-windows-test-v0.1"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag windows/publish/PocketMapper.exe --clobber
+          } else {
+            gh release create $tag windows/publish/PocketMapper.exe `
+              --target "$env:GITHUB_SHA" `
+              --title "PocketMapper Windows Test v0.1" `
+              --notes "Portable Windows external-display test build."
+          }
